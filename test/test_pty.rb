@@ -66,6 +66,54 @@ class TestPTY < Test::Unit::TestCase
     skip $!
   end
 
+  def test_env
+    PTY.spawn({'FOO'=>'bar'}, RUBY, '-e', 'puts ENV["FOO"]') { |r,w,pid|
+      begin
+        assert_equal("bar\r\n", r.gets)
+      ensure
+        r.close
+        w.close
+        Process.wait(pid)
+      end
+    }
+  rescue RuntimeError
+    skip $!
+  end
+
+  def test_options
+    out_rd, out_wr = PTY.open
+    PTY.spawn(RUBY, '-e', 'puts "bar"', out: out_wr) { |r,w,pid|
+      begin
+        assert_equal("bar\r\n", out_rd.gets)
+      ensure
+        r.close
+        w.close
+        out_rd.close
+        out_wr.close
+        Process.wait(pid)
+      end
+    }
+  rescue RuntimeError
+    skip $!
+  end
+
+  def test_env_and_options
+    out_rd, out_wr = PTY.open
+    PTY.spawn({'FOO'=>'bar'}, RUBY, '-e', 'puts ENV["FOO"]', out: out_wr) { |r,w,pid|
+      begin
+        assert_equal("bar\r\n", out_rd.gets)
+      ensure
+        r.close
+        w.close
+        out_rd.close
+        out_wr.close
+        Process.wait(pid)
+      end
+    }
+  rescue RuntimeError
+    skip $!
+  end
+
   def test_open_without_block
     ret = PTY.open
   rescue RuntimeError
