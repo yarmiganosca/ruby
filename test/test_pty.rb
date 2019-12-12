@@ -67,7 +67,7 @@ class TestPTY < Test::Unit::TestCase
   end
 
   def test_env
-    PTY.spawn({'FOO'=>'bar'}, RUBY, '-e', 'puts ENV["FOO"]') { |r,w,pid|
+    PTY.spawn({'FOO'=>'bar'}, RUBY, '-e', 'puts ENV["FOO"]') do |r,w,pid|
       begin
         assert_equal("bar\r\n", r.gets)
       ensure
@@ -75,41 +75,39 @@ class TestPTY < Test::Unit::TestCase
         w.close
         Process.wait(pid)
       end
-    }
+    end
   rescue RuntimeError
     skip $!
   end
 
   def test_options
-    out_rd, out_wr = PTY.open
-    PTY.spawn(RUBY, '-e', 'puts "bar"', out: out_wr) { |r,w,pid|
-      begin
-        assert_equal("bar\r\n", out_rd.gets)
-      ensure
-        r.close
-        w.close
-        out_rd.close
-        out_wr.close
-        Process.wait(pid)
+    PTY.open do |out_rd, out_wr|
+      PTY.spawn(RUBY, '-e', 'puts "bar"', out: out_wr) do |r,w,pid|
+        begin
+          assert_equal("bar\r\n", out_rd.gets)
+        ensure
+          r.close
+          w.close
+          Process.wait(pid)
+        end
       end
-    }
+    end
   rescue RuntimeError
     skip $!
   end
 
   def test_env_and_options
-    out_rd, out_wr = PTY.open
-    PTY.spawn({'FOO'=>'bar'}, RUBY, '-e', 'puts ENV["FOO"]', out: out_wr) { |r,w,pid|
-      begin
-        assert_equal("bar\r\n", out_rd.gets)
-      ensure
-        r.close
-        w.close
-        out_rd.close
-        out_wr.close
-        Process.wait(pid)
+    PTY.open do |out_rd, out_wr|
+      PTY.spawn({'FOO'=>'bar'}, RUBY, '-e', 'puts ENV["FOO"]', out: out_wr) do |r,w,pid|
+        begin
+          assert_equal("bar\r\n", out_rd.gets)
+        ensure
+          r.close
+          w.close
+          Process.wait(pid)
+        end
       end
-    }
+    end
   rescue RuntimeError
     skip $!
   end
